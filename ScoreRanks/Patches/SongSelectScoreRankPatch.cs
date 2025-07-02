@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ScoreRankForTdmx.Patches
+namespace ScoreRanks.Patches
 {
     internal class SongSelectScoreRankpatch
     {
@@ -38,14 +38,14 @@ namespace ScoreRankForTdmx.Patches
             bool isSelectedSong = __instance.name == "Kanban1";
 
             var currentSong = song;
-            MusicDataInterface.MusicInfoAccesser musicInfoAccesser = TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MyDataManager.MusicData.musicInfoAccessers.Find((MusicDataInterface.MusicInfoAccesser info) => info.Id == currentSong.Id);
+            MusicDataInterface.MusicInfoAccesser musicInfoAccesser = TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MyDataManager.MusicData.GetInfoById(currentSong.Id);
 
             int highestNormal = 0;
             int highestReached = 0;
             List<ScoreRank> ranks = new List<ScoreRank>();
             for (int i = 0; i < 5; i++)
             {
-                ScoreRank scoreRank = ScoreRankPatch.GetScoreRank(song.HighScores[i].hiScoreRecordInfos.score, musicInfoAccesser.Scores[i]);
+                ScoreRank scoreRank = ScoreRankUtility.GetScoreRank(song.HighScores[i].hiScoreRecordInfos.score, musicInfoAccesser.Scores[i]);
                 ranks.Add(scoreRank);
                 if (scoreRank != ScoreRank.None)
                 {

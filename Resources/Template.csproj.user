@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  
+  <PropertyGroup Condition="$(DefineConstants.Contains('TDMX_IL2CPP'))">
+    <GameDir></GameDir>
+    <CopyOutputFiles>false</CopyOutputFiles>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="$(DefineConstants.Contains('TDMX_Mono'))">
+    <GameDir></GameDir>
+    <CopyOutputFiles>false</CopyOutputFiles>
+  </PropertyGroup>
+  
+</Project>

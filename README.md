@@ -1,7 +1,7 @@
-# ScoreRankForTdmx
+# TDMX.ScoreRanks
 | Mono | IL2CPP |
 |:--:|:--:|
-|✅|❌|
+|✅|✅|
 
  Adds Score Rank icons to TDMX.
  

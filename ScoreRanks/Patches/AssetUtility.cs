@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ScoreRankForTdmx.Patches
+namespace ScoreRanks.Patches
 {
     internal class AssetUtility
     {
@@ -20,25 +20,33 @@ namespace ScoreRankForTdmx.Patches
             {
                 LoadedSprites = new Dictionary<string, Sprite>();
             }
-            if (LoadedSprites.ContainsKey(spriteFilePath))
+            if (LoadedSprites.ContainsKey(spriteFilePath) && LoadedSprites[spriteFilePath] != null)
             {
                 return LoadedSprites[spriteFilePath];
             }
             else if (File.Exists(spriteFilePath))
             {
-                LoadedSprites.Add(spriteFilePath, LoadSpriteFromFile(spriteFilePath));
-                return LoadedSprites[spriteFilePath];
+                var sprite = LoadSpriteFromFile(spriteFilePath);
+                if (LoadedSprites.ContainsKey(spriteFilePath))
+                {
+                    LoadedSprites[spriteFilePath] = sprite;
+                }
+                else
+                {
+                    LoadedSprites.Add(spriteFilePath, sprite);
+                }
+                return sprite;
             }
             // otherwise, the file doesn't exist, log an error, and return null (or hopefully a small transparent sprite
             else
             {
-                Plugin.LogError("Could not find file: " + spriteFilePath);
+                ModLogger.Log("Could not find file: " + spriteFilePath, LogType.Error);
                 // Instead of null, could I have this return just a 1x1 transparent sprite or something?
 
                 // Creates a transparent 2x2 texture, and returns that as the sprite
-#if TAIKO_IL2CPP
-                Texture2D tex = new Texture2D(2, 2, TextureFormat.ARGB32, 1, false, (IntPtr)0);
-#elif TAIKO_MONO
+#if IL2CPP
+                Texture2D tex = new Texture2D(2, 2, TextureFormat.ARGB32, false);
+#elif MONO
                 Texture2D tex = new Texture2D(2, 2, TextureFormat.ARGB32, 1, false);
 #endif
                 Color fillColor = Color.clear;
@@ -58,9 +66,9 @@ namespace ScoreRankForTdmx.Patches
 
         static private Sprite LoadSpriteFromFile(string spriteFilePath)
         {
-#if TAIKO_IL2CPP
-            Texture2D tex = new Texture2D(2, 2, TextureFormat.ARGB32, 1, false, (IntPtr)0);
-#elif TAIKO_MONO
+#if IL2CPP
+            Texture2D tex = new Texture2D(2, 2, TextureFormat.ARGB32, 1, false, IntPtr.Zero);
+#elif MONO
             Texture2D tex = new Texture2D(2, 2, TextureFormat.ARGB32, 1, false);
 #endif
             if (!File.Exists(spriteFilePath))
@@ -69,9 +77,10 @@ namespace ScoreRankForTdmx.Patches
             }
             else
             {
-#if TAIKO_IL2CPP
-                tex.LoadRawTextureDataImplArray(File.ReadAllBytes(spriteFilePath));
-#elif TAIKO_MONO
+#if IL2CPP
+                //tex.LoadRawTextureDataImplArray(File.ReadAllBytes(spriteFilePath));
+                ImageConversion.LoadImage(tex, File.ReadAllBytes(spriteFilePath));
+#elif MONO
                 tex.LoadImage(File.ReadAllBytes(spriteFilePath));
 #endif
             }

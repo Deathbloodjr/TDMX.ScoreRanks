@@ -11,7 +11,7 @@ using UnityEngine.UI;
 using static MusicDataInterface;
 using static SongSelectManager;
 
-namespace ScoreRankForTdmx.Patches
+namespace ScoreRanks.Patches
 {
     internal class CourseSelectPatch
     {
@@ -42,7 +42,7 @@ namespace ScoreRankForTdmx.Patches
                 {
                     EnsoRecordInfo ensoRecordInfo;
                     __instance.playDataManager.GetPlayerRecordInfo(0, currentSong.UniqueId, (EnsoData.EnsoLevelType)i, out ensoRecordInfo);
-                    ScoreRank scoreRank = ScoreRankPatch.GetScoreRank(ensoRecordInfo.normalHiScore.score, currentSong.Scores[i]);
+                    ScoreRank scoreRank = ScoreRankUtility.GetScoreRank(ensoRecordInfo.normalHiScore.score, currentSong.Scores[i]);
 
                     var imageObj = AssetUtility.GetChildByName(CourseButtonObjects[i], "ScoreRank1P");
                     if (imageObj == null)
@@ -66,7 +66,7 @@ namespace ScoreRankForTdmx.Patches
             }
             catch (Exception e)
             {
-                Plugin.LogError(e.Message);
+                ModLogger.Log(e.Message, LogType.Error);
             }
         }
 

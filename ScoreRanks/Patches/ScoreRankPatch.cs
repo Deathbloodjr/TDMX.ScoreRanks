@@ -9,30 +9,12 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ScoreRankForTdmx.Patches
+namespace ScoreRanks.Patches
 {
-    enum ScoreRank
-    {
-        None,
-        WhiteIki,
-        BronzeIki,
-        SilverIki,
-        GoldMiyabi,
-        PinkMiyabi,
-        PurpleMiyabi,
-        Kiwami
-    }
-
     internal class ScoreRankPatch
     {
-        static int currentScoreP1 = 0;
-        static int p1ScoreRank = 0;
-        static ScoreRank currentP1Rank = ScoreRank.None;
-
-        static int currentScoreP2 = 0;
-        static int p2ScoreRank = 0;
-        static ScoreRank currentP2Rank = ScoreRank.None;
-
+        static ScoreRankPlayerData Player1 = new ScoreRankPlayerData();
+        static ScoreRankPlayerData Player2 = new ScoreRankPlayerData();
 
         [HarmonyPatch(typeof(CourseSelect))]
         [HarmonyPatch(nameof(CourseSelect.EnsoConfigSubmit))]
@@ -40,10 +22,9 @@ namespace ScoreRankForTdmx.Patches
         [HarmonyPostfix]
         public static void CourseSelect_EnsoConfigSubmit_Postfix(CourseSelect __instance)
         {
-            List<MusicDataInterface.MusicInfoAccesser> musicInfoAccessers = TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MyDataManager.MusicData.musicInfoAccessers;
-            var musicInfo = musicInfoAccessers.Find((x) => x.Id == __instance.selectedSongInfo.Id);
-            p1ScoreRank = musicInfo.Scores[__instance.selectedCourse];
-            p2ScoreRank = musicInfo.Scores[__instance.selectedCourse2P];
+            var musicInfo = TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MyDataManager.MusicData.GetInfoById(__instance.selectedSongInfo.Id);
+            Player1.ScoreRankValue = musicInfo.Scores[__instance.selectedCourse];
+            Player2.ScoreRankValue = musicInfo.Scores[__instance.selectedCourse2P];
             ResetScore();
         }
 
@@ -51,40 +32,21 @@ namespace ScoreRankForTdmx.Patches
         [HarmonyPatch(typeof(ScorePlayer))]
         [HarmonyPatch(nameof(ScorePlayer.SetAddScorePool))]
         [HarmonyPatch(MethodType.Normal)]
-        [HarmonyPrefix]
-        public static bool ScorePlayer_SetAddScorePool_Prefix(ScorePlayer __instance, int score)
+        [HarmonyPostfix]
+        public static void ScorePlayer_SetAddScorePool_Postfix(ScorePlayer __instance, int score)
         {
-            // I super fucked this up, fix it later
-            if (__instance.playerNo == 0)
+            ScoreRankPlayerData curPlayer = __instance.playerNo == 0 ? Player1 : Player2;
+
+            curPlayer.CurrentScore += score;
+            var newRank = ScoreRankUtility.GetScoreRank(curPlayer);
+            if (newRank != curPlayer.CurrentRank)
             {
-                currentScoreP1 += score;
-
-
-
-
-                var newRank = GetScoreRank(currentScoreP1, p1ScoreRank);
-                if (newRank != currentP1Rank)
-                {
-                    currentP1Rank = newRank;
-                    Plugin.LogInfo("P1ScoreRank: " + currentP1Rank);
-                    // This failed, probably due to no parent
-                    CreateEnsoScoreRankIcon(currentP1Rank, 0);
-                }
-            }
-            else
-            {
-                currentScoreP2 += score;
-                //Plugin.LogInfo("currentScoreP2: " + currentScoreP2);
-
-                var newRank = GetScoreRank(currentScoreP2, p2ScoreRank);
-                if (newRank != currentP2Rank)
-                {
-                    currentP2Rank = newRank;
-                    Plugin.LogInfo("P2ScoreRank: " + currentP2Rank);
-                }
+                curPlayer.CurrentRank = newRank;
+                ModLogger.Log("P" + (__instance.playerNo + 1) + "ScoreRank: " + curPlayer.CurrentRank.ToString());
+                CreateEnsoScoreRankIcon(curPlayer.CurrentRank, 0);
             }
 
-            return true;
+            return;
         }
 
         [HarmonyPatch(typeof(EnsoPauseMenu))]
@@ -115,17 +77,19 @@ namespace ScoreRankForTdmx.Patches
         }
 
         [HarmonyPatch(typeof(ResultPlayer))]
-        [HarmonyPatch(nameof(ResultPlayer.DisplayCrown))]
+        [HarmonyPatch(nameof(ResultPlayer.DisplayScore))]
         [HarmonyPatch(MethodType.Normal)]
         [HarmonyPostfix]
-        public static void ResultPlayer_DisplayCrown_Postfix(ResultPlayer __instance)
+        public static void ResultPlayer_DisplayScore_Postfix(ResultPlayer __instance)
         {
             var parent = GameObject.Find("BaseMain");
 
-            Vector2 DesiredPosition = new Vector2(-267, 0);
+            Vector2 DesiredPosition = new Vector2(-231, -35);
             Vector2 RealPosition = new Vector2(DesiredPosition.x + 868, DesiredPosition.y + 224);
 
-            var imageObj = AssetUtility.CreateImageChild(parent, "ScoreRankResult", RealPosition, Path.Combine(Plugin.Instance.ConfigScoreRankAssetFolderPath.Value, "Big", currentP1Rank.ToString() + ".png"));
+            ScoreRankPlayerData curPlayer = __instance.playerNo == 0 ? Player1 : Player2;
+
+            var imageObj = AssetUtility.CreateImageChild(parent, "ScoreRankResult", RealPosition, ScoreRankUtility.GetSpriteFilePath(curPlayer.CurrentRank, ScoreRankSpriteVersion.Small));
             var image = imageObj.GetComponent<Image>();
             var imageColor = image.color;
             imageColor.a = 0;
@@ -147,47 +111,8 @@ namespace ScoreRankForTdmx.Patches
 
         public static void ResetScore()
         {
-            currentScoreP1 = 0;
-            currentScoreP2 = 0;
-            currentP1Rank = ScoreRank.None;
-            currentP2Rank = ScoreRank.None;
-        }
-
-        public static ScoreRank GetScoreRank(int score, int maxScore)
-        {
-            var ratio = (float)score / (float)maxScore;
-            if (ratio >= 1f)
-            {
-                return ScoreRank.Kiwami;
-            }
-            else if (ratio >= 0.95f)
-            {
-                return ScoreRank.PurpleMiyabi;
-            }
-            else if (ratio >= 0.9f)
-            {
-                return ScoreRank.PinkMiyabi;
-            }
-            else if (ratio >= 0.8f)
-            {
-                return ScoreRank.GoldMiyabi;
-            }
-            else if (ratio >= 0.7f)
-            {
-                return ScoreRank.SilverIki;
-            }
-            else if (ratio >= 0.6f)
-            {
-                return ScoreRank.BronzeIki;
-            }
-            else if (ratio >= 0.5f)
-            {
-                return ScoreRank.WhiteIki;
-            }
-            else
-            {
-                return ScoreRank.None;
-            }
+            Player1.Reset();
+            Player2.Reset();
         }
 
         public static void CreateEnsoScoreRankIcon(ScoreRank scoreRank, int playerNo)
