@@ -13,153 +13,85 @@ namespace ScoreRanks.Patches
 {
     internal class SongSelectScoreRankpatch
     {
-        private static readonly Dictionary<EnsoData.EnsoLevelType, Sprite> LevelIcons = new();
+        static Dictionary<Kanban, ButtonCrownObject> SongButtonObjects = new Dictionary<Kanban, ButtonCrownObject>();
 
         [HarmonyPatch(typeof(SongSelectManager))]
-        [HarmonyPatch("Start")]
+        [HarmonyPatch(nameof(SongSelectManager.Start))]
         [HarmonyPatch(MethodType.Normal)]
         [HarmonyPostfix]
         public static void Start_Postfix(SongSelectManager __instance)
         {
-            LevelIcons.Clear();
+            SpriteInitialization.InitializeDifficultySprites(__instance);
+        }
 
-            for (var i = 0; i < 5; i++)
+        private static void ClearSongButtonDictionary()
+        {
+            foreach (var item in SongButtonObjects)
             {
-                LevelIcons.Add((EnsoData.EnsoLevelType)i, __instance.songFilterSetting.difficultyIconSprites[i]);
+                if (item.Key == null ||
+                    item.Value == null)
+                {
+                    SongButtonObjects.Remove(item.Key);
+                }
             }
         }
 
         [HarmonyPatch(typeof(SongSelectKanban))]
-        [HarmonyPatch("UpdateDisplay")]
+        [HarmonyPatch(nameof(SongSelectKanban.UpdateDisplay))]
         [HarmonyPatch(MethodType.Normal)]
         [HarmonyPostfix]
-        public static void UpdateDisplay_Postfix(SongSelectKanban __instance, in SongSelectManager.Song song)
+        public static void SongSelectKanban_UpdateDisplay_Postfix(SongSelectKanban __instance, in SongSelectManager.Song song)
         {
-            bool isSelectedSong = __instance.name == "Kanban1";
-
-            var currentSong = song;
-            MusicDataInterface.MusicInfoAccesser musicInfoAccesser = TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MyDataManager.MusicData.GetInfoById(currentSong.Id);
-
-            int highestNormal = 0;
-            int highestReached = 0;
-            List<ScoreRank> ranks = new List<ScoreRank>();
-            for (int i = 0; i < 5; i++)
+            if (!SongButtonObjects.ContainsKey(KanbanUtility.KanbanToEnum(__instance)))
             {
-                ScoreRank scoreRank = ScoreRankUtility.GetScoreRank(song.HighScores[i].hiScoreRecordInfos.score, musicInfoAccesser.Scores[i]);
-                ranks.Add(scoreRank);
-                if (scoreRank != ScoreRank.None)
-                {
-                    highestReached = i;
-                    if (i < 4)
-                    {
-                        highestNormal = i;
-                    }
-                }
+                SongButtonObjects.Add(KanbanUtility.KanbanToEnum(__instance), new ButtonCrownObject(__instance));
             }
 
-            if (isSelectedSong)
-            {
-                CreateLeftScoreRankIcon(__instance, ranks[highestNormal], isSelectedSong, false, highestNormal);
-                CreateLeftScoreRankIcon(__instance, ranks[4], isSelectedSong, true, 4);
-            }
-            else
-            {
-                CreateLeftScoreRankIcon(__instance, ranks[highestReached], isSelectedSong, false, highestReached);
-            }
-
-            if (isSelectedSong)
-            {
-                // 
-                for (int i = 0; i < 5; i++)
-                {
-                    var contents = AssetUtility.GetChildByName(__instance.gameObject, "Contents");
-                    var diffCourse = AssetUtility.GetChildByName(contents, "DiffCourse");
-                    var diffCourseObj = AssetUtility.GetChildByName(diffCourse, "DiffCourse" + (i + 1));
-                    if (diffCourseObj != null)
-                    {
-                        var scoreRankObj = AssetUtility.GetChildByName(diffCourseObj, "ScoreRank1P");
-                        if (scoreRankObj == null)
-                        {
-                            scoreRankObj = AssetUtility.CreateImageChild(diffCourseObj, "ScoreRank1P", new Vector2(71, 65), Path.Combine(Plugin.Instance.ConfigScoreRankAssetFolderPath.Value, "Small", ranks[i].ToString() + ".png"));
-                        }
-
-                        var image = scoreRankObj.GetOrAddComponent<Image>();
-                        image.sprite = AssetUtility.LoadSprite(Path.Combine(Plugin.Instance.ConfigScoreRankAssetFolderPath.Value, "Small", ranks[i].ToString() + ".png"));
-
-                        scoreRankObj.transform.localScale = new Vector3(1, 1, 1);
-
-                    }
-                }
-            }
-
+            var obj = SongButtonObjects[KanbanUtility.KanbanToEnum(__instance)];
+            Plugin.Instance.StartCoroutine(obj.ChangeScoreRanks());
         }
 
-        public static void CreateLeftScoreRankIcon(SongSelectKanban __instance, ScoreRank scoreRank, bool isSelected, bool isUra, int difficulty)
+        static SongSelectManager.KanbanMoveType prevMoveType = SongSelectManager.KanbanMoveType.Initialize;
+
+        [HarmonyPatch(typeof(SongSelectManager))]
+        [HarmonyPatch(nameof(SongSelectManager.PlayKanbanMoveAnim))]
+        [HarmonyPatch(MethodType.Normal)]
+        [HarmonyPostfix]
+        public static void SongSelectManager_PlayKanbanMoveAnim_Postfix(SongSelectManager __instance, SongSelectManager.KanbanMoveType moveType, SongSelectManager.KanbanMoveSpeed moveSpeed = SongSelectManager.KanbanMoveSpeed.Normal)
         {
-            var scoreRankObj = AssetUtility.GetChildByName(__instance.gameObject, isUra ? "UraScoreRank" : "ScoreRank");
-            if (scoreRankObj == null)
-            {
-                scoreRankObj = AssetUtility.CreateImageChild(__instance.gameObject, isUra ? "UraScoreRank" : "ScoreRank", new Vector2(0, 0), Path.Combine(Plugin.Instance.ConfigScoreRankAssetFolderPath.Value, "Small", "WhiteIki.png"));
-            }
-            var image = scoreRankObj.GetOrAddComponent<Image>();
-            var diffIconObj = AssetUtility.GetChildByName(scoreRankObj, "DiffIcon");
-            if (diffIconObj == null)
-            {
-                diffIconObj = AssetUtility.CreateImageChild(scoreRankObj, "DiffIcon", new Vector2(3.3f, -15), LevelIcons[(EnsoData.EnsoLevelType)difficulty]);
-            }
-            if (isSelected)
-            {
-                diffIconObj.transform.localScale = new Vector3(0.75f, 0.75f, 0.75f);
-            }
-            else
-            {
-                diffIconObj.transform.localPosition = new Vector3(14, -5, 0);
-                diffIconObj.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-            }
+            // The middle 3 Kanban are layed out like:
+            // 2 (Top)    Index 1
+            // 1 (Center) Index 0
+            // 3 (Bottom) Index 2
+            // They then alternate between top and bottom, where evens go on top, odds on bottom
+            // But we only really care about the middle 3
+            // Actually, we only care about the center one
 
-            var diffIconImage = diffIconObj.GetOrAddComponent<Image>();
-
-            if (scoreRank == ScoreRank.None)
+            if (prevMoveType == SongSelectManager.KanbanMoveType.MoveEnded &&
+                (moveType == SongSelectManager.KanbanMoveType.MoveUp || moveType == SongSelectManager.KanbanMoveType.MoveDown))
             {
-                image.color = new Color(1, 1, 1, 0);
-                diffIconImage.color = new Color(1, 1, 1, 0);
-            }
-            else
-            {
-                image.sprite = AssetUtility.LoadSprite(Path.Combine(Plugin.Instance.ConfigScoreRankAssetFolderPath.Value, "Small", scoreRank.ToString() + ".png"));
-                image.color = new Color(1, 1, 1, 1);
-                diffIconImage.sprite = LevelIcons[(EnsoData.EnsoLevelType)difficulty];
-                diffIconImage.color = new Color(1, 1, 1, 1);
-            }
-
-
-
-            if (isSelected)
-            {
-                if (isUra)
+                if (moveType == SongSelectManager.KanbanMoveType.MoveUp)
                 {
-                    scoreRankObj.transform.localPosition = new Vector2(-465, -96);
+                    SongButtonObjects[KanbanUtility.KanbanToEnum(__instance.kanbans[0])].ShrinkCrowns();
                 }
                 else
                 {
-                    scoreRankObj.transform.localPosition = new Vector2(-465, -25);
+                    SongButtonObjects[KanbanUtility.KanbanToEnum(__instance.kanbans[0])].ShrinkCrownsImmediate();
+                    SongButtonObjects[KanbanUtility.KanbanToEnum(__instance.kanbans[1])].ExpandCrownsImmediate();
+                    SongButtonObjects[KanbanUtility.KanbanToEnum(__instance.kanbans[1])].ShrinkCrowns();
                 }
-                scoreRankObj.transform.localScale = new Vector3(1.25f, 1.25f, 1.25f);
             }
-            else
+            else if ((prevMoveType == SongSelectManager.KanbanMoveType.MoveUp || prevMoveType == SongSelectManager.KanbanMoveType.MoveDown) &&
+                    moveType == SongSelectManager.KanbanMoveType.MoveEnded)
             {
-                if (isUra)
-                {
-                    image.color = new Color(1, 1, 1, 0);
-                    diffIconImage.color = new Color(1, 1, 1, 0);
-                }
-                else
-                {
-                    scoreRankObj.transform.localPosition = new Vector2(-410, -40);
-                    scoreRankObj.transform.localScale = new Vector3(1, 1, 1);
-                }
+                SongButtonObjects[KanbanUtility.KanbanToEnum(__instance.kanbans[0])].ExpandCrowns();
             }
 
+            prevMoveType = moveType;
+            if (moveType == SongSelectManager.KanbanMoveType.Initialize)
+            {
+                prevMoveType = SongSelectManager.KanbanMoveType.MoveEnded;
+            }
         }
     }
 }

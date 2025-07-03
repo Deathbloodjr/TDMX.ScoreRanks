@@ -13,7 +13,7 @@ namespace ScoreRanks.Patches
         Big,
         Small,
     }
-    enum ScoreRank
+    public enum ScoreRank
     {
         None,
         WhiteIki,
