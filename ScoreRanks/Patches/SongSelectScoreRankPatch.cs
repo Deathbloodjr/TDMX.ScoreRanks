@@ -47,6 +47,11 @@ namespace ScoreRanks.Patches
                 SongButtonObjects.Add(KanbanUtility.KanbanToEnum(__instance), new ButtonCrownObject(__instance));
             }
 
+            if (!SongButtonObjects[KanbanUtility.KanbanToEnum(__instance)].IsInitialized())
+            {
+                SongButtonObjects[KanbanUtility.KanbanToEnum(__instance)].InitializeCrownGameObjects(__instance);
+            }
+
             var obj = SongButtonObjects[KanbanUtility.KanbanToEnum(__instance)];
             Plugin.Instance.StartCoroutine(obj.ChangeScoreRanks());
         }

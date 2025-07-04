@@ -20,9 +20,8 @@ namespace ScoreRanks.Patches
 
         public ButtonCrownObject(SongSelectKanban parent)
         {
-            Parent = parent;
             isSelected = parent.name == "Kanban1";
-            InitializeCrownGameObjects(parent.gameObject);
+            InitializeCrownGameObjects(parent);
         }
 
 
@@ -39,7 +38,12 @@ namespace ScoreRanks.Patches
             return true;
         }
 
-        void InitializeCrownGameObjects(GameObject parent)
+        public void InitializeCrownGameObjects(SongSelectKanban parent)
+        {
+            Parent = parent;
+            InitializeCrownGameObjects(parent.gameObject);
+        }
+        public void InitializeCrownGameObjects(GameObject parent)
         {
             GameObject crownParent = new GameObject("ScoreRank");
             crownParent.transform.SetParent(parent.transform);
@@ -76,7 +80,14 @@ namespace ScoreRanks.Patches
 
             crownObj.SetActive(false);
 
-            GameObjects.Add(crownId, crownObj);
+            if (GameObjects.ContainsKey(crownId))
+            {
+                GameObjects[crownId] = crownObj;
+            }
+            else
+            {
+                GameObjects.Add(crownId, crownObj);
+            }
         }
 
         internal IEnumerator ChangeScoreRanks()

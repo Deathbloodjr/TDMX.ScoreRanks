@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AuthorName>DB</AuthorName>
     <ModName>ScoreRanks</ModName>
-    <ModVersion>1.1.0</ModVersion>
+    <ModVersion>1.1.1</ModVersion>
     <Description>Adds Score Rank icons to TDMX.</Description>
   </PropertyGroup>
 

@@ -6,7 +6,7 @@
     <CopyOutputFiles>false</CopyOutputFiles>
   </PropertyGroup>
   
-  <PropertyGroup Condition="$(DefineConstants.Contains('TDMX_Mono'))">
+  <PropertyGroup Condition="$(DefineConstants.Contains('TDMX_MONO'))">
     <GameDir></GameDir>
     <CopyOutputFiles>false</CopyOutputFiles>
   </PropertyGroup>
