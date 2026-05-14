@@ -16,6 +16,8 @@ namespace ScoreRanks.Patches
         static ScoreRankPlayerData Player1 = new ScoreRankPlayerData();
         static ScoreRankPlayerData Player2 = new ScoreRankPlayerData();
 
+        // Should this be done at EnsoGameManager.Start instead?
+        // This is why GhostBattle is broken with ScoreRanks
         [HarmonyPatch(typeof(CourseSelect))]
         [HarmonyPatch(nameof(CourseSelect.EnsoConfigSubmit))]
         [HarmonyPatch(MethodType.Normal)]
@@ -84,6 +86,8 @@ namespace ScoreRanks.Patches
         {
             var parent = GameObject.Find("BaseMain");
 
+            // This has ScoreRanks appearing at the same position for Player 1 and Player 2
+            // That's bad for GhostBattle
             Vector2 DesiredPosition = new Vector2(-231, -35);
             Vector2 RealPosition = new Vector2(DesiredPosition.x + 868, DesiredPosition.y + 224);
 
@@ -117,6 +121,14 @@ namespace ScoreRanks.Patches
 
         public static void CreateEnsoScoreRankIcon(ScoreRank scoreRank, int playerNo)
         {
+            // I'd like to change this to use CustomGameMode with some new stored data in it
+            // Make it more generic
+            // Actually I still don't know how I want to do this
+            // I know I have some mods that I'd want to have this mod disabled in
+            // And other mods that I'd want this mod to be enabled in
+            // So should I have something in those mods that tells ScoreRanks to be disabled?
+            // That'd make more sense than having it in ScoreRanks checking if it's in a different mod and should be disabled
+            // I'm not sure how to get that to work yet though
             if (GameObject.Find("DaniDojo") == null)
             {
                 Plugin.Instance.StartCoroutine(CreateEnsoScoreRankAnimation(scoreRank, playerNo));

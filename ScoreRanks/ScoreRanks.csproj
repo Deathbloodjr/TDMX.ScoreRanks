@@ -81,6 +81,7 @@
 
   <ItemGroup Condition="$(DefineConstants.Contains('TDMX'))">
     <Reference Include="$(CustomGameModesPath)" Private="false" />
+    <Reference Include="$(SaveProfileManagerPath)" Private="false" />
   </ItemGroup>
 
 
