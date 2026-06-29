@@ -4,11 +4,13 @@
   <PropertyGroup Condition="$(DefineConstants.Contains('TDMX_IL2CPP'))">
     <GameDir></GameDir>
     <CopyOutputFiles>false</CopyOutputFiles>
+    <SaveProfileManagerPath></SaveProfileManagerPath>
   </PropertyGroup>
   
   <PropertyGroup Condition="$(DefineConstants.Contains('TDMX_MONO'))">
     <GameDir></GameDir>
     <CopyOutputFiles>false</CopyOutputFiles>
+    <SaveProfileManagerPath></SaveProfileManagerPath>
   </PropertyGroup>
   
 </Project>

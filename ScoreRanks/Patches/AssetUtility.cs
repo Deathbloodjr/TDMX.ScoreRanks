@@ -73,7 +73,7 @@ namespace ScoreRanks.Patches
 #endif
             if (!File.Exists(spriteFilePath))
             {
-                Plugin.Log.LogError("Could not find file: " + spriteFilePath);
+                ModLogger.Log("Could not find file: " + spriteFilePath, LogType.Error);
             }
             else
             {
@@ -254,20 +254,24 @@ namespace ScoreRanks.Patches
 
 #endregion
 
-        public static IEnumerator MoveOverSeconds(GameObject objectToMove, Vector3 end, float seconds, bool deleteAfter = false)
+        public static IEnumerator MoveAnchoredPositionOverSeconds(GameObject objectToMove, Vector3 end, float seconds, bool deleteAfter = false)
         {
             float elapsedTime = 0;
-            Vector3 startingPos = objectToMove.transform.position;
-            while (elapsedTime < seconds)
+            var rectTransform = objectToMove.GetComponent<RectTransform>();
+            if (rectTransform != null)
             {
-                objectToMove.transform.position = Vector3.Lerp(startingPos, end, (elapsedTime / seconds));
-                elapsedTime += Time.deltaTime;
-                yield return new WaitForEndOfFrame();
-            }
-            objectToMove.transform.position = end;
-            if (deleteAfter)
-            {
-                GameObject.Destroy(objectToMove);
+                Vector3 startingPos = rectTransform.anchoredPosition;
+                while (elapsedTime < seconds)
+                {
+                    rectTransform.anchoredPosition = Vector3.Lerp(startingPos, end, (elapsedTime / seconds));
+                    elapsedTime += Time.deltaTime;
+                    yield return new WaitForEndOfFrame();
+                }
+                rectTransform.anchoredPosition = end;
+                if (deleteAfter)
+                {
+                    GameObject.Destroy(objectToMove);
+                }
             }
         }
 

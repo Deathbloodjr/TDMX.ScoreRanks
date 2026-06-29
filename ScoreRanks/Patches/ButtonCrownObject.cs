@@ -18,9 +18,13 @@ namespace ScoreRanks.Patches
         SongSelectKanban Parent;
         SongSelectManager.Song Song => Parent.displayingSong;
 
+        static float ResolutionScale = 1f;
+
         public ButtonCrownObject(SongSelectKanban parent)
         {
             isSelected = parent.name == "Kanban1";
+            ResolutionScale = parent.transform.lossyScale.x;
+            
             InitializeCrownGameObjects(parent);
         }
 
@@ -58,7 +62,7 @@ namespace ScoreRanks.Patches
         {
             GameObject crownObj = new GameObject(crownId.ToString());
             crownObj.transform.SetParent(parent.transform);
-            ScoreRankPosition pos = PlayerScoreRankPositions.GetScoreRankPosition(crownId, isSelected);
+            ScoreRankPosition pos = PlayerScoreRankPositions.GetScoreRankPosition(crownId, isSelected, ResolutionScale);
             crownObj.transform.localPosition = pos.Position;
             crownObj.transform.localScale = pos.Scale;
 
@@ -212,8 +216,8 @@ namespace ScoreRanks.Patches
                 GameObject crownObj = GameObjects[crown];
 
                 float elapsedTime = 0f;
-                ScoreRankPosition startPos = PlayerScoreRankPositions.GetScoreRankPosition(start);
-                ScoreRankPosition endPos = PlayerScoreRankPositions.GetScoreRankPosition(end);
+                ScoreRankPosition startPos = PlayerScoreRankPositions.GetScoreRankPosition(start, ResolutionScale);
+                ScoreRankPosition endPos = PlayerScoreRankPositions.GetScoreRankPosition(end, ResolutionScale);
 
                 while (elapsedTime < duration)
                 {
@@ -236,8 +240,8 @@ namespace ScoreRanks.Patches
             {
                 GameObject crownObj = GameObjects[crown];
 
-                ScoreRankPosition startPos = PlayerScoreRankPositions.GetScoreRankPosition(start);
-                ScoreRankPosition endPos = PlayerScoreRankPositions.GetScoreRankPosition(end);
+                ScoreRankPosition startPos = PlayerScoreRankPositions.GetScoreRankPosition(start, ResolutionScale);
+                ScoreRankPosition endPos = PlayerScoreRankPositions.GetScoreRankPosition(end, ResolutionScale);
 
                 crownObj.transform.localPosition = endPos.Position;
                 crownObj.transform.localScale = endPos.Scale;

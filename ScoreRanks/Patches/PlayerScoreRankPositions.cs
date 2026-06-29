@@ -83,7 +83,7 @@ namespace ScoreRanks.Patches
 
     internal class PlayerScoreRankPositions
     {
-        public static ScoreRankPosition GetScoreRankPosition(int playerNo, bool isUra, bool isSelected)
+        public static ScoreRankPosition GetScoreRankPosition(int playerNo, bool isUra, bool isSelected, float scale = 1f)
         {
             if (playerNo == 0)
             {
@@ -91,12 +91,12 @@ namespace ScoreRanks.Patches
                 {
                     if (isSelected)
                     {
-                        return GetScoreRankPosition(PositionIdPosition.P1OniSelected);
+                        return GetScoreRankPosition(PositionIdPosition.P1OniSelected, scale);
 
                     }
                     else
                     {
-                        return GetScoreRankPosition(PositionIdPosition.P1OniUnselected);
+                        return GetScoreRankPosition(PositionIdPosition.P1OniUnselected, scale);
 
                     }
                 }
@@ -104,12 +104,12 @@ namespace ScoreRanks.Patches
                 {
                     if (isSelected)
                     {
-                        return GetScoreRankPosition(PositionIdPosition.P1UraSelected);
+                        return GetScoreRankPosition(PositionIdPosition.P1UraSelected, scale);
 
                     }
                     else
                     {
-                        return GetScoreRankPosition(PositionIdPosition.P1UraUnselected);
+                        return GetScoreRankPosition(PositionIdPosition.P1UraUnselected, scale);
                     }
                 }
             }
@@ -119,12 +119,12 @@ namespace ScoreRanks.Patches
                 {
                     if (isSelected)
                     {
-                        return GetScoreRankPosition(PositionIdPosition.P2OniSelected);
+                        return GetScoreRankPosition(PositionIdPosition.P2OniSelected, scale);
 
                     }
                     else
                     {
-                        return GetScoreRankPosition(PositionIdPosition.P2OniUnselected);
+                        return GetScoreRankPosition(PositionIdPosition.P2OniUnselected, scale);
 
                     }
                 }
@@ -132,12 +132,12 @@ namespace ScoreRanks.Patches
                 {
                     if (isSelected)
                     {
-                        return GetScoreRankPosition(PositionIdPosition.P2UraSelected);
+                        return GetScoreRankPosition(PositionIdPosition.P2UraSelected, scale);
 
                     }
                     else
                     {
-                        return GetScoreRankPosition(PositionIdPosition.P2UraUnselected);
+                        return GetScoreRankPosition(PositionIdPosition.P2UraUnselected, scale);
                     }
                 }
             }
@@ -149,19 +149,19 @@ namespace ScoreRanks.Patches
             }
         }
 
-        public static ScoreRankPosition GetScoreRankPosition(PositionIdPosition crown)
+        public static ScoreRankPosition GetScoreRankPosition(PositionIdPosition crown, float scale = 1f)
         {
-            float selectedP1X = -451f;
-            float selectedOniY = 10f;
-            float selectedP2X = 445f;
-            float selectedUraY = -42f;
-            float selectedScale = 1f;
+            float selectedP1X = -451f * scale;
+            float selectedOniY = 10f * scale;
+            float selectedP2X = 445f * scale;
+            float selectedUraY = -42f * scale;
+            float selectedScale = 1f * scale;
 
-            float unselectedP1X = -363f;
-            float unselectedOniY = 14f;
-            float unselectedP2X = 407f;
-            float unselectedUraY = -16f;
-            float unselectedScale = 0.65f;
+            float unselectedP1X = -363f * scale;
+            float unselectedOniY = 14f * scale;
+            float unselectedP2X = 407f * scale;
+            float unselectedUraY = -16f * scale;
+            float unselectedScale = 0.65f * scale;
 
             switch (crown)
             {
@@ -204,14 +204,14 @@ namespace ScoreRanks.Patches
             }
         }
 
-        public static ScoreRankPosition GetScoreRankPosition(PositionId id, bool isSelected)
+        public static ScoreRankPosition GetScoreRankPosition(PositionId id, bool isSelected, float scale = 1f)
         {
             switch (id)
             {
-                case PositionId.P1Oni: return isSelected ? GetScoreRankPosition(PositionIdPosition.P1OniSelected) : GetScoreRankPosition(PositionIdPosition.P1OniUnselected);
-                case PositionId.P1Ura: return isSelected ? GetScoreRankPosition(PositionIdPosition.P1UraSelected) : GetScoreRankPosition(PositionIdPosition.P1UraUnselected);
-                case PositionId.P2Oni: return isSelected ? GetScoreRankPosition(PositionIdPosition.P2OniSelected) : GetScoreRankPosition(PositionIdPosition.P2OniUnselected);
-                case PositionId.P2Ura: return isSelected ? GetScoreRankPosition(PositionIdPosition.P2UraSelected) : GetScoreRankPosition(PositionIdPosition.P2UraUnselected);
+                case PositionId.P1Oni: return isSelected ? GetScoreRankPosition(PositionIdPosition.P1OniSelected, scale) : GetScoreRankPosition(PositionIdPosition.P1OniUnselected, scale);
+                case PositionId.P1Ura: return isSelected ? GetScoreRankPosition(PositionIdPosition.P1UraSelected, scale) : GetScoreRankPosition(PositionIdPosition.P1UraUnselected, scale);
+                case PositionId.P2Oni: return isSelected ? GetScoreRankPosition(PositionIdPosition.P2OniSelected, scale) : GetScoreRankPosition(PositionIdPosition.P2OniUnselected, scale);
+                case PositionId.P2Ura: return isSelected ? GetScoreRankPosition(PositionIdPosition.P2UraSelected, scale) : GetScoreRankPosition(PositionIdPosition.P2UraUnselected, scale);
             }
 
             return new ScoreRankPosition(new Vector2(0, 0),

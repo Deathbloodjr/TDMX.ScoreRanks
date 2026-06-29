@@ -16,17 +16,15 @@ namespace ScoreRanks.Patches
         static ScoreRankPlayerData Player1 = new ScoreRankPlayerData();
         static ScoreRankPlayerData Player2 = new ScoreRankPlayerData();
 
-        // Should this be done at EnsoGameManager.Start instead?
-        // This is why GhostBattle is broken with ScoreRanks
-        [HarmonyPatch(typeof(CourseSelect))]
-        [HarmonyPatch(nameof(CourseSelect.EnsoConfigSubmit))]
+        [HarmonyPatch(typeof(EnsoGameManager))]
+        [HarmonyPatch(nameof(EnsoGameManager.Start))]
         [HarmonyPatch(MethodType.Normal)]
         [HarmonyPostfix]
-        public static void CourseSelect_EnsoConfigSubmit_Postfix(CourseSelect __instance)
+        public static void EnsoGameManager_Start_Postfix(EnsoGameManager __instance)
         {
-            var musicInfo = TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MyDataManager.MusicData.GetInfoById(__instance.selectedSongInfo.Id);
-            Player1.ScoreRankValue = musicInfo.Scores[__instance.selectedCourse];
-            Player2.ScoreRankValue = musicInfo.Scores[__instance.selectedCourse2P];
+            var musicInfo = TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MyDataManager.MusicData.GetInfoById(__instance.settings.musicuid);
+            Player1.ScoreRankValue = musicInfo.Scores[(int)__instance.settings.ensoPlayerSettings[0].courseType];
+            Player2.ScoreRankValue = musicInfo.Scores[(int)__instance.settings.ensoPlayerSettings[1].courseType];
             ResetScore();
         }
 
@@ -45,7 +43,7 @@ namespace ScoreRanks.Patches
             {
                 curPlayer.CurrentRank = newRank;
                 ModLogger.Log("P" + (__instance.playerNo + 1) + "ScoreRank: " + curPlayer.CurrentRank.ToString());
-                CreateEnsoScoreRankIcon(curPlayer.CurrentRank, 0);
+                CreateEnsoScoreRankIcon(curPlayer.CurrentRank, __instance.playerNo);
             }
 
             return;
@@ -139,18 +137,35 @@ namespace ScoreRanks.Patches
         {
             var canvasFgObject = GameObject.Find("CanvasFg");
 
-            Vector2 MainPosition = GetScoreRankPosition(-905, 305);
-            Vector2 DesiredPosition = new Vector2(-905, 305);
+            Vector2 StartPosition = Vector2.zero;
+            Vector2 MainPosition = Vector2.zero;
+            Vector2 EndPosition = Vector2.zero;
+            if (playerNo == 0)
+            {
+                float x = -905;
+                float y = 305;
+                MainPosition = GetScoreRankPosition(x, y);
+                StartPosition = GetScoreRankPosition(x, y - 50);
+                EndPosition = GetScoreRankPosition(x, y + 50);
+            }
+            else if (playerNo == 1)
+            {
+                float x = -905;
+                float y = -500;
+                MainPosition = GetScoreRankPosition(x, y);
+                StartPosition = GetScoreRankPosition(x, y + 50);
+                EndPosition = GetScoreRankPosition(x, y - 50);
+            }
 
             // This position is changed at runtime, but the desired location is -920, 300
             // Adding 1920/2 or 1080/2 will put it at that location
-            var scoreRankObject = AssetUtility.CreateImageChild(canvasFgObject, "ScoreRank", MainPosition + new Vector2(0, -50), Path.Combine(Plugin.Instance.ConfigScoreRankAssetFolderPath.Value, "Big", scoreRank.ToString() + ".png"));
+            var scoreRankObject = AssetUtility.CreateImageChild(canvasFgObject, "ScoreRank", StartPosition, Path.Combine(Plugin.Instance.ConfigScoreRankAssetFolderPath.Value, "Big", scoreRank.ToString() + ".png"));
             var image = scoreRankObject.GetOrAddComponent<Image>();
             var imageColor = image.color;
             imageColor.a = 0;
             image.color = imageColor;
 
-            Plugin.Instance.StartCoroutine(AssetUtility.MoveOverSeconds(scoreRankObject, DesiredPosition, 0.25f));
+            Plugin.Instance.StartCoroutine(AssetUtility.MoveAnchoredPositionOverSeconds(scoreRankObject, MainPosition, 0.25f));
             Plugin.Instance.StartCoroutine(AssetUtility.ChangeTransparencyOverSeconds(scoreRankObject, 0.25f, true));
             yield return new WaitForSeconds(0.25f);
 
@@ -161,21 +176,21 @@ namespace ScoreRanks.Patches
             // Wait 2 seconds before moving up and disappearing
             yield return new WaitForSeconds(2);
 
-            Plugin.Instance.StartCoroutine(AssetUtility.MoveOverSeconds(scoreRankObject, DesiredPosition + new Vector2(0, 50), 0.25f));
+            Plugin.Instance.StartCoroutine(AssetUtility.MoveAnchoredPositionOverSeconds(scoreRankObject, EndPosition, 0.25f));
             Plugin.Instance.StartCoroutine(AssetUtility.ChangeTransparencyOverSeconds(scoreRankObject, 0.25f, false));
             yield return new WaitForSeconds(0.5f);
 
-            GameObject.Destroy(scoreRankObject);
+            //GameObject.Destroy(scoreRankObject);
 
         }
 
-        private static Vector2 GetScoreRankPosition(int x, int y)
+        private static Vector2 GetScoreRankPosition(float x, float y)
         {
             return new Vector2(x + (1920 / 2), y + (1080 / 2));
         }
         private static Vector2 GetScoreRankPosition(Vector2 input)
         {
-            return new Vector2(input.x + (1920 / 2), input.y + (1080 / 2));
+            return GetScoreRankPosition(input.x, input.y);
         }
     }
 }
